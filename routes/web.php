@@ -22,6 +22,7 @@ Route::post('/login', function () {
     $password = Request::get('password');
 
 
+    // TODO: Verify Google creds.
     if (Auth::attempt([
         'email' => $email,
         'password' => $password
