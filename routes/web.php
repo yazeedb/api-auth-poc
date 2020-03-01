@@ -18,19 +18,46 @@ Route::get('/', function () {
 
 
 Route::post('/login', function () {
-    $email = Request::get('email');
-    $password = Request::get('password');
+    $client = new Google_Client([
+        'client_id' =>
+        '235318923218-s6tms65fam3o6d51shlhmci587s5mi22.apps.googleusercontent.com'
+    ]);
 
+    $idToken = Request::get('id_token');
 
-    // TODO: Verify Google creds.
-    if (Auth::attempt([
-        'email' => $email,
-        'password' => $password
-    ])) {
-        return response()->json('', 204);
+    /**
+     * verifyIdToken verifies the following...
+     * JWT signature
+     * the "aud" claim
+     * the "exp" claim
+     * the "iss' claim
+     */
+    $payload = $client->verifyIdToken($idToken);
+
+    // Take $payload['email'] field
+    // Check if user exists in table
+    // If exists, return 204
+    // Else, add to DB and return 204
+
+    if ($payload) {
+        $userId = $payload['sub'];
+        $userEmail = $payload['email'];
+
+        $existingUser = DB::table('users')
+            ->where('id', $userId)
+            ->first();
+
+        if (!$existingUser) {
+            DB::table('users')->insert([
+                'id' => $userId,
+                'email' => $userEmail
+            ]);
+        }
+
+        return response()->json($payload);
     } else {
         return response()->json([
-            'error' => 'invalid_credentials'
+            'error' => 'Invalid Credentials'
         ], 403);
     }
 });
